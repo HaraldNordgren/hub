@@ -142,11 +142,10 @@ func pullRequest(cmd *Command, args *Args) {
 
 	var (
 		base, head string
-		force, noEdit bool
+		force      bool
 	)
 
 	force = flagPullRequestForce
-	noEdit = flagPullRequestNoEdit
 
 	if flagPullRequestBase != "" {
 		baseProject, base = parsePullRequestProject(baseProject, flagPullRequestBase)
@@ -233,7 +232,17 @@ func pullRequest(cmd *Command, args *Args) {
 Write a message for this pull request. The first block
 of text is the title and the rest is the description.`, fullBase, fullHead))
 
-	if cmd.FlagPassed("message") {
+	// TODO: Make a switch
+	if flagPullRequestNoEdit {
+		commits, _ := git.RefList(baseTracking, headTracking)
+		if len(commits) == 0 {
+			utils.Check(fmt.Errorf("no commits"))
+		}
+		message, err := git.Show(commits[len(commits)-1])
+		utils.Check(err)
+		messageBuilder.Message = message
+		panic(message)
+	} else if cmd.FlagPassed("message") {
 		messageBuilder.Message = flagPullRequestMessage
 		messageBuilder.Edit = flagPullRequestEdit
 	} else if cmd.FlagPassed("file") {
@@ -252,12 +261,6 @@ of text is the title and the rest is the description.`, fullBase, fullHead))
 		commitLogs := ""
 
 		commits, _ := git.RefList(baseTracking, headForMessage)
-		fmt.Println(commits[0])
-		fmt.Println(git.Ref(commits[0]))
-		fmt.Println(git.Show(commits[0]))
-		fmt.Println(noEdit)
-		panic("Hejjjjj")
-
 		if len(commits) == 1 {
 			message, err = git.Show(commits[0])
 			utils.Check(err)
