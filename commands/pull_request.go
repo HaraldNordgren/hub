@@ -93,7 +93,8 @@ var (
 	flagPullRequestCopy,
 	flagPullRequestEdit,
 	flagPullRequestPush,
-	flagPullRequestForce bool
+	flagPullRequestForce,
+	flagPullRequestNoEdit bool
 
 	flagPullRequestAssignees,
 	flagPullRequestReviewers,
@@ -110,6 +111,7 @@ func init() {
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestEdit, "edit", "e", false, "EDIT")
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestPush, "push", "p", false, "PUSH")
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestForce, "force", "f", false, "FORCE")
+	cmdPullRequest.Flag.BoolVarP(&flagPullRequestNoEdit, "no-edit", "", false, "NO-EDIT") // TODO: Add docstring
 	cmdPullRequest.Flag.StringVarP(&flagPullRequestFile, "file", "F", "", "FILE")
 	cmdPullRequest.Flag.VarP(&flagPullRequestAssignees, "assign", "a", "USERS")
 	cmdPullRequest.Flag.VarP(&flagPullRequestReviewers, "reviewer", "r", "USERS")
@@ -140,10 +142,11 @@ func pullRequest(cmd *Command, args *Args) {
 
 	var (
 		base, head string
-		force      bool
+		force, noEdit bool
 	)
 
 	force = flagPullRequestForce
+	noEdit = flagPullRequestNoEdit
 
 	if flagPullRequestBase != "" {
 		baseProject, base = parsePullRequestProject(baseProject, flagPullRequestBase)
@@ -249,6 +252,10 @@ of text is the title and the rest is the description.`, fullBase, fullHead))
 		commitLogs := ""
 
 		commits, _ := git.RefList(baseTracking, headForMessage)
+		fmt.Println(commits[0])
+		fmt.Println(noEdit)
+		panic("Hejjjjj")
+
 		if len(commits) == 1 {
 			message, err = git.Show(commits[0])
 			utils.Check(err)
