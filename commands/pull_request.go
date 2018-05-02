@@ -253,6 +253,8 @@ of text is the title and the rest is the description.`, fullBase, fullHead))
 
 		commits, _ := git.RefList(baseTracking, headForMessage)
 		fmt.Println(commits[0])
+		fmt.Println(git.Ref(commits[0]))
+		fmt.Println(git.Show(commits[0]))
 		fmt.Println(noEdit)
 		panic("Hejjjjj")
 
