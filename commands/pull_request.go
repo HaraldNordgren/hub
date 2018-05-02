@@ -285,7 +285,6 @@ of text is the title and the rest is the description.`, fullBase, fullHead))
 		message, err := git.Show(commits[len(commits)-1])
 		utils.Check(err)
 		messageBuilder.Message = message
-		panic(message)
 	}
 
 	title, body, err := messageBuilder.Extract()
