@@ -28,6 +28,10 @@ pull-request -i <ISSUE>
 	-f, --force
 		Skip the check for unpushed commits.
 
+	--no-edit
+		Use the commit message from the first commit on the branch without opening
+		a text editor.
+
 	-m, --message <MESSAGE>
 		Use the first line of <MESSAGE> as pull request title, and the rest as pull
 		request description.
@@ -111,7 +115,7 @@ func init() {
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestEdit, "edit", "e", false, "EDIT")
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestPush, "push", "p", false, "PUSH")
 	cmdPullRequest.Flag.BoolVarP(&flagPullRequestForce, "force", "f", false, "FORCE")
-	cmdPullRequest.Flag.BoolVarP(&flagPullRequestNoEdit, "no-edit", "", false, "NO-EDIT") // TODO: Add docstring
+	cmdPullRequest.Flag.BoolVarP(&flagPullRequestNoEdit, "no-edit", "", false, "NO-EDIT")
 	cmdPullRequest.Flag.StringVarP(&flagPullRequestFile, "file", "F", "", "FILE")
 	cmdPullRequest.Flag.VarP(&flagPullRequestAssignees, "assign", "a", "USERS")
 	cmdPullRequest.Flag.VarP(&flagPullRequestReviewers, "reviewer", "r", "USERS")
@@ -232,24 +236,15 @@ func pullRequest(cmd *Command, args *Args) {
 Write a message for this pull request. The first block
 of text is the title and the rest is the description.`, fullBase, fullHead))
 
-	// TODO: Make a switch
-	if flagPullRequestNoEdit {
-		commits, _ := git.RefList(baseTracking, headTracking)
-		if len(commits) == 0 {
-			utils.Check(fmt.Errorf("no commits"))
-		}
-		message, err := git.Show(commits[len(commits)-1])
-		utils.Check(err)
-		messageBuilder.Message = message
-		panic(message)
-	} else if cmd.FlagPassed("message") {
+	switch {
+	case cmd.FlagPassed("message"):
 		messageBuilder.Message = flagPullRequestMessage
 		messageBuilder.Edit = flagPullRequestEdit
-	} else if cmd.FlagPassed("file") {
+	case cmd.FlagPassed("file"):
 		messageBuilder.Message, err = msgFromFile(flagPullRequestFile)
 		utils.Check(err)
 		messageBuilder.Edit = flagPullRequestEdit
-	} else if flagPullRequestIssue == "" {
+	case flagPullRequestIssue == "":
 		messageBuilder.Edit = true
 
 		headForMessage := headTracking
@@ -282,6 +277,15 @@ of text is the title and the rest is the description.`, fullBase, fullHead))
 		}
 
 		messageBuilder.Message = message
+	case flagPullRequestNoEdit:
+		commits, _ := git.RefList(baseTracking, headTracking)
+		if len(commits) == 0 {
+			utils.Check(fmt.Errorf("No new commits on branch"))
+		}
+		message, err := git.Show(commits[len(commits)-1])
+		utils.Check(err)
+		messageBuilder.Message = message
+		panic(message)
 	}
 
 	title, body, err := messageBuilder.Extract()
